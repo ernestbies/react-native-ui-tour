@@ -17,6 +17,8 @@ import { Tooltip, TooltipProps } from './Tooltip';
 
 declare var __TEST__: boolean;
 const MIN_TOOLTIP_MASK_GAP = 24;
+const DEFAULT_TOOLTIP_HEIGHT = 135;
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 export interface ModalProps {
   ref: any;
@@ -61,6 +63,7 @@ interface State {
   tooltipScale: Animated.Value;
   opacity: Animated.Value;
   currentStep?: IStep;
+  tooltipHeight: number;
 }
 
 interface Move {
@@ -102,9 +105,11 @@ export class Modal extends React.Component<ModalProps, State> {
     size: undefined,
     position: undefined,
     currentStep: undefined,
+    tooltipHeight: DEFAULT_TOOLTIP_HEIGHT,
   };
 
   tooltipAnimation: Animated.CompositeAnimation | null = null;
+  currentTarget?: Move;
 
   constructor(props: ModalProps) {
     super(props);
@@ -118,6 +123,18 @@ export class Modal extends React.Component<ModalProps, State> {
 
   handleLayoutChange = ({ nativeEvent: { layout } }: LayoutChangeEvent) => {
     this.layout = layout;
+  };
+
+  handleTooltipLayout = ({ nativeEvent: { layout } }: LayoutChangeEvent) => {
+    const tooltipHeight = Math.ceil(layout.height);
+
+    if (tooltipHeight > 0 && tooltipHeight !== this.state.tooltipHeight) {
+      this.setState({ tooltipHeight }, () => {
+        if (this.currentTarget && this.props.visible) {
+          this._animateMove(this.currentTarget);
+        }
+      });
+    }
   };
 
   measure(): Promise<Layout> {
@@ -153,6 +170,8 @@ export class Modal extends React.Component<ModalProps, State> {
     }
   ) {
     const layout = await this.measure();
+    this.currentTarget = { ...obj };
+
     if (!this.props.androidStatusBarVisible && Platform.OS === 'android') {
       obj.top -= StatusBar.currentHeight || 30;
     }
@@ -201,7 +220,13 @@ export class Modal extends React.Component<ModalProps, State> {
     const maskDuration = this.props.animationDuration!;
     const tooltipDuration = Math.round(maskDuration * 0.55);
     const tooltipDelay = Math.round(maskDuration * 0.65);
-    const toValue = verticalPosition === 'bottom' ? tooltip.top : obj.top - tooltipMaskGap - 135;
+    const preferredToValue =
+      verticalPosition === 'bottom'
+        ? tooltip.top
+        : obj.top - tooltipMaskGap - this.state.tooltipHeight;
+    const minTooltipY = MARGIN;
+    const maxTooltipY = Math.max(layout.height! - this.state.tooltipHeight - MARGIN, minTooltipY);
+    const toValue = clamp(preferredToValue, minTooltipY, maxTooltipY);
     const slideOffset = verticalPosition === 'bottom' ? 16 : -16;
 
     this.state.opacity.setValue(0);
@@ -321,6 +346,7 @@ export class Modal extends React.Component<ModalProps, State> {
       <Animated.View
         pointerEvents="box-none"
         key="tooltip"
+        onLayout={this.handleTooltipLayout}
         style={[
           styles.tooltip,
           this.props.tooltipStyle,
