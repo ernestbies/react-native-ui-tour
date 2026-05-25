@@ -1,6 +1,6 @@
 {
   "name": "react-native-ui-tour",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Interactive step-by-step tour guide for React Native apps.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
