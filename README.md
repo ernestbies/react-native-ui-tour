@@ -27,18 +27,18 @@ This repository is a fork-derived package. Original authors are credited in the 
 ## Installation
 
 ```sh
-yarn add react-native-ui-tour react-native-svg
+yarn add react-native-ui-tour react-native-safe-area-context react-native-svg
 ```
 
 or:
 
 ```sh
-npm install react-native-ui-tour react-native-svg
+npm install react-native-ui-tour react-native-safe-area-context react-native-svg
 ```
 
-`react`, `react-native`, and `react-native-svg` are peer dependencies. Your app must provide them.
+`react`, `react-native`, `react-native-safe-area-context`, and `react-native-svg` are peer dependencies. Your app must provide them.
 
-For bare React Native projects, install native SVG dependencies as required by `react-native-svg`:
+For bare React Native projects, install native dependencies as required by `react-native-safe-area-context` and `react-native-svg`:
 
 ```sh
 cd ios && pod install

@@ -1,6 +1,6 @@
 {
   "name": "react-native-ui-tour",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Interactive step-by-step tour guide for React Native apps.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -65,27 +65,27 @@
     "mitt": "^3.0.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "^7.29.7",
     "@types/jest": "^30.0.0",
     "@types/lodash.clamp": "^4.0.9",
-    "@types/react": "^19.2.14",
-    "eslint": "^10.3.0",
+    "@types/react": "^19.2.15",
+    "eslint": "^10.4.1",
     "globals": "^17.6.0",
     "jest": "^30.4.2",
     "prettier": "^3.8.3",
     "react": "^19.2.6",
     "react-native": "^0.85.3",
-    "react-native-safe-area-context": "^3.0.0",
+    "react-native-safe-area-context": "^5.8.0",
     "react-native-svg": "^15.15.5",
     "react-test-renderer": "^19.2.6",
-    "ts-jest": "^29.4.9",
+    "ts-jest": "^29.4.11",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.3"
+    "typescript-eslint": "^8.60.0"
   },
   "peerDependencies": {
-    "react": ">=17",
-    "react-native": ">=0.64",
-    "react-native-safe-area-context": ">=3.0.0",
-    "react-native-svg": ">=12.3.0"
+    "react": ">=18.2.0",
+    "react-native": ">=0.74",
+    "react-native-safe-area-context": ">=5.8.0",
+    "react-native-svg": ">=15.8.0"
   }
 }
