@@ -1,6 +1,6 @@
 {
   "name": "react-native-ui-tour",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Interactive step-by-step tour guide for React Native apps.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -75,6 +75,7 @@
     "prettier": "^3.8.3",
     "react": "^19.2.6",
     "react-native": "^0.85.3",
+    "react-native-safe-area-context": "^3.0.0",
     "react-native-svg": "^15.15.5",
     "react-test-renderer": "^19.2.6",
     "ts-jest": "^29.4.9",
@@ -84,6 +85,7 @@
   "peerDependencies": {
     "react": ">=17",
     "react-native": ">=0.64",
+    "react-native-safe-area-context": ">=3.0.0",
     "react-native-svg": ">=12.3.0"
   }
 }

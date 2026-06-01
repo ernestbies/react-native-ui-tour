@@ -10,6 +10,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import { EdgeInsets, SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { BorderRadiusObject, IStep, Labels, ValueXY } from '../types';
 import styles, { MARGIN } from './style';
 import { SvgMask } from './SvgMask';
@@ -18,6 +19,12 @@ import { Tooltip, TooltipProps } from './Tooltip';
 declare var __TEST__: boolean;
 const MIN_TOOLTIP_MASK_GAP = 24;
 const DEFAULT_TOOLTIP_HEIGHT = 135;
+const DEFAULT_SAFE_AREA_INSETS: EdgeInsets = {
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+};
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 export interface ModalProps {
@@ -110,6 +117,7 @@ export class Modal extends React.Component<ModalProps, State> {
 
   tooltipAnimation: Animated.CompositeAnimation | null = null;
   currentTarget?: Move;
+  safeAreaInsets: EdgeInsets = DEFAULT_SAFE_AREA_INSETS;
 
   constructor(props: ModalProps) {
     super(props);
@@ -181,51 +189,41 @@ export class Modal extends React.Component<ModalProps, State> {
       y: obj.top! + obj.height! / 2,
     };
 
-    const relativeToLeft = center.x;
     const relativeToTop = center.y;
     const relativeToBottom = Math.abs(center.y - layout.height!);
-    const relativeToRight = Math.abs(center.x - layout.width!);
 
     const verticalPosition = relativeToBottom > relativeToTop ? 'bottom' : 'top';
-    const horizontalPosition = relativeToLeft > relativeToRight ? 'left' : 'right';
 
     const tooltip = {
       top: 0,
-      tooltip: 0,
-      bottom: 0,
-      right: 0,
+      left: this.safeAreaInsets.left + MARGIN,
+      right: this.safeAreaInsets.right + MARGIN,
+      width: undefined,
       maxWidth: 0,
-      left: 0,
+      maxHeight: Math.max(
+        layout.height! - this.safeAreaInsets.top - this.safeAreaInsets.bottom - MARGIN * 2,
+        0
+      ),
     };
 
     const stepTooltipOffset = this.props.currentStep?.tooltipBottomOffset || 0;
     const tooltipMaskGap = MARGIN + MIN_TOOLTIP_MASK_GAP + stepTooltipOffset;
 
-    if (verticalPosition === 'bottom') {
-      tooltip.top = obj.top + obj.height + tooltipMaskGap;
-    } else {
-      tooltip.bottom = layout.height! - (obj.top - tooltipMaskGap);
-    }
-
-    if (horizontalPosition === 'left') {
-      tooltip.right = Math.max(layout.width! - (obj.left + obj.width), 0);
-      tooltip.right = tooltip.right === 0 ? tooltip.right + MARGIN : tooltip.right;
-      tooltip.maxWidth = layout.width! - tooltip.right - MARGIN;
-    } else {
-      tooltip.left = Math.max(obj.left, 0);
-      tooltip.left = tooltip.left === 0 ? tooltip.left + MARGIN : tooltip.left;
-      tooltip.maxWidth = layout.width! - tooltip.left - MARGIN;
-    }
+    const safeAreaTop = this.safeAreaInsets.top + MARGIN;
+    const safeAreaBottom = layout.height! - this.safeAreaInsets.bottom - MARGIN;
+    const safeAreaLeft = this.safeAreaInsets.left + MARGIN;
+    const safeAreaRight = layout.width! - this.safeAreaInsets.right - MARGIN;
+    tooltip.maxWidth = Math.max(safeAreaRight - safeAreaLeft, 0);
 
     const maskDuration = this.props.animationDuration!;
     const tooltipDuration = Math.round(maskDuration * 0.55);
     const tooltipDelay = Math.round(maskDuration * 0.65);
     const preferredToValue =
       verticalPosition === 'bottom'
-        ? tooltip.top
+        ? obj.top + obj.height + tooltipMaskGap
         : obj.top - tooltipMaskGap - this.state.tooltipHeight;
-    const minTooltipY = MARGIN;
-    const maxTooltipY = Math.max(layout.height! - this.state.tooltipHeight - MARGIN, minTooltipY);
+    const minTooltipY = safeAreaTop;
+    const maxTooltipY = Math.max(safeAreaBottom - this.state.tooltipHeight, minTooltipY);
     const toValue = clamp(preferredToValue, minTooltipY, maxTooltipY);
     const slideOffset = verticalPosition === 'bottom' ? 16 : -16;
 
@@ -350,6 +348,7 @@ export class Modal extends React.Component<ModalProps, State> {
         style={[
           styles.tooltip,
           this.props.tooltipStyle,
+          this.state.tooltip,
           {
             zIndex: 99,
             opacity,
@@ -385,20 +384,34 @@ export class Modal extends React.Component<ModalProps, State> {
     if (!containerVisible) {
       return null;
     }
+
+    const renderContent = (insets: EdgeInsets | null) => {
+      this.safeAreaInsets = insets || DEFAULT_SAFE_AREA_INSETS;
+
+      return (
+        <View
+          style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]}
+          pointerEvents="box-none"
+        >
+          <View style={styles.container} onLayout={this.handleLayoutChange} pointerEvents="box-none">
+            {contentVisible && (
+              <>
+                {this.renderMask()}
+                {this.renderNonInteractionPlaceholder()}
+                {this.renderTooltip()}
+              </>
+            )}
+          </View>
+        </View>
+      );
+    };
+
     return (
       <View
         style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]}
         pointerEvents="box-none"
       >
-        <View style={styles.container} onLayout={this.handleLayoutChange} pointerEvents="box-none">
-          {contentVisible && (
-            <>
-              {this.renderMask()}
-              {this.renderNonInteractionPlaceholder()}
-              {this.renderTooltip()}
-            </>
-          )}
-        </View>
+        <SafeAreaInsetsContext.Consumer>{renderContent}</SafeAreaInsetsContext.Consumer>
       </View>
     );
   }
