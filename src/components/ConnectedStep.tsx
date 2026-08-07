@@ -4,6 +4,8 @@ import { ITourGuideContext } from './TourGuideContext';
 
 declare var __TEST__: boolean;
 
+const MAX_MEASURE_WAIT_FRAMES = 120;
+
 interface Props {
   name: string;
   text: string;
@@ -86,7 +88,7 @@ export class ConnectedStep extends React.Component<Props> {
     return new Promise((resolve) => {
       let attempts = 0;
       const tryMeasure = () => {
-        if (++attempts > 120) {
+        if (++attempts > MAX_MEASURE_WAIT_FRAMES) {
           resolve({
             x: 0,
             y: 0,
