@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Animated,
+  Dimensions,
   Easing,
   LayoutChangeEvent,
   Platform,
@@ -83,7 +84,7 @@ interface Move {
 export class Modal extends React.Component<ModalProps, State> {
   static defaultProps = {
     easing: Easing.out(Easing.cubic),
-    animationDuration: 400,
+    animationDuration: 200,
     tooltipComponent: Tooltip as any,
     tooltipStyle: {},
     androidStatusBarVisible: false,
@@ -93,11 +94,11 @@ export class Modal extends React.Component<ModalProps, State> {
     preventOutsideInteraction: false,
   };
 
-  layout?: Layout = {
+  layout: Layout = {
     x: 0,
     y: 0,
-    width: 0,
-    height: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
   };
 
   state = {
@@ -147,26 +148,15 @@ export class Modal extends React.Component<ModalProps, State> {
 
   measure(): Promise<Layout> {
     if (typeof __TEST__ !== 'undefined' && __TEST__) {
-      return new Promise((resolve) =>
-        resolve({
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0,
-        })
-      );
+      return Promise.resolve({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+      });
     }
 
-    return new Promise((resolve) => {
-      const setLayout = () => {
-        if (this.layout && this.layout.width !== 0) {
-          resolve(this.layout);
-        } else {
-          requestAnimationFrame(setLayout);
-        }
-      };
-      setLayout();
-    });
+    return Promise.resolve(this.layout);
   }
 
   async _animateMove(

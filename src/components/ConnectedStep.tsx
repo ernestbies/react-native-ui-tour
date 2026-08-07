@@ -83,27 +83,42 @@ export class ConnectedStep extends React.Component<Props> {
       );
     }
 
-    return new Promise((resolve, reject) => {
-      const measure = () => {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const tryMeasure = () => {
+        if (++attempts > 120) {
+          resolve({
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+          });
+          return;
+        }
+
         const node = this.wrapperRef.current;
         if (node && node.measure) {
           const { borderRadius } = this.props;
           node.measure(
-            (_ox: number, _oy: number, width: number, height: number, x: number, y: number) =>
-              resolve({
-                x: borderRadius ? x + borderRadius : x,
-                y,
-                width: borderRadius ? width - borderRadius * 2 : width,
-                height,
-              }),
-            reject
+            (_ox: number, _oy: number, width: number, height: number, x: number, y: number) => {
+              if (width === 0 || height === 0) {
+                requestAnimationFrame(tryMeasure);
+              } else {
+                resolve({
+                  x: borderRadius ? x + borderRadius : x,
+                  y,
+                  width: borderRadius ? width - borderRadius * 2 : width,
+                  height,
+                });
+              }
+            }
           );
         } else {
-          requestAnimationFrame(measure);
+          requestAnimationFrame(tryMeasure);
         }
       };
 
-      requestAnimationFrame(measure);
+      tryMeasure();
     });
   }
 

@@ -83,7 +83,7 @@ export const TourGuideProvider = ({
   }, [visible]);
 
   useEffect(() => {
-    if (visible[tourKey] || currentStep[tourKey]) {
+    if (visible[tourKey] && currentStep[tourKey]) {
       moveToCurrentStep(tourKey);
     }
   }, [visible, currentStep]);
@@ -117,6 +117,10 @@ export const TourGuideProvider = ({
   }, [mounted, steps]);
 
   const moveToCurrentStep = async (key: string) => {
+    if (currentStep[key] === getFirstStep(key)) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     const size = await currentStep[key]?.target.measure();
     if (
       size === undefined ||
@@ -164,15 +168,13 @@ export const TourGuideProvider = ({
           }
         });
 
-        requestAnimationFrame(() => {
-          updateCurrentStep((currentStep) => {
-            const newStep = { ...currentStep };
-            newStep[key] = step;
-            eventEmitter[key]?.emit('stepChange', step);
-            return newStep;
-          });
-          resolve();
+        updateCurrentStep((currentStep) => {
+          const newStep = { ...currentStep };
+          newStep[key] = step;
+          eventEmitter[key]?.emit('stepChange', step);
+          return newStep;
         });
+        resolve();
       } else {
         updateCurrentStep((currentStep) => {
           const newStep = { ...currentStep };
