@@ -63,6 +63,8 @@ export const TourGuideProvider = ({
   const [currentStep, updateCurrentStep] = useState<Ctx<IStep | undefined>>({
     _default: undefined,
   });
+  const currentStepRef = useRef(currentStep);
+  currentStepRef.current = currentStep;
   const [steps, setSteps] = useState<Ctx<Steps>>({ _default: [] });
 
   const [canStart, setCanStart] = useState<Ctx<boolean>>({ _default: false });
@@ -117,17 +119,28 @@ export const TourGuideProvider = ({
   }, [mounted, steps]);
 
   const moveToCurrentStep = async (key: string) => {
-    if (currentStep[key] === getFirstStep(key)) {
+    const step = currentStep[key];
+    if (!step) {
+      return;
+    }
+
+    if (step === getFirstStep(key)) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    const size = await currentStep[key]?.target.measure();
+    const size = await step.target.measure();
+    // The step changed (or the tour stopped) while we were waiting — drop the stale move
+    if (currentStepRef.current[key] !== step) {
+      return;
+    }
     if (
       size === undefined ||
       isNaN(size.width) ||
       isNaN(size.height) ||
       isNaN(size.x) ||
-      isNaN(size.y)
+      isNaN(size.y) ||
+      size.width === 0 ||
+      size.height === 0
     ) {
       return;
     }
@@ -154,7 +167,10 @@ export const TourGuideProvider = ({
                 (_x: number, y: number, _w: number, h: number) => {
                   const yOffset = y > 0 ? y - h / 2 : 0;
                   scrollNode.scrollTo({ y: yOffset, animated: false });
-                  res();
+                  // Wait one frame so the scroll commits before the step is measured
+                  requestAnimationFrame(() => {
+                    res();
+                  });
                 },
                 () => {
                   res();

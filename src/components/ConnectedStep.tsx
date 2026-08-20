@@ -87,14 +87,12 @@ export class ConnectedStep extends React.Component<Props> {
 
     return new Promise((resolve) => {
       let attempts = 0;
+      let lastSize: { x: number; y: number; width: number; height: number } | undefined;
+
       const tryMeasure = () => {
         if (++attempts > MAX_MEASURE_WAIT_FRAMES) {
-          resolve({
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-          });
+          // The element never settled — fall back to the last valid measurement
+          resolve(lastSize || { x: 0, y: 0, width: 0, height: 0 });
           return;
         }
 
@@ -106,12 +104,25 @@ export class ConnectedStep extends React.Component<Props> {
               if (width === 0 || height === 0) {
                 requestAnimationFrame(tryMeasure);
               } else {
-                resolve({
+                const size = {
                   x: borderRadius ? x + borderRadius : x,
                   y,
                   width: borderRadius ? width - borderRadius * 2 : width,
                   height,
-                });
+                };
+                // Resolve only once the element stops moving (layout settled)
+                if (
+                  lastSize &&
+                  lastSize.x === size.x &&
+                  lastSize.y === size.y &&
+                  lastSize.width === size.width &&
+                  lastSize.height === size.height
+                ) {
+                  resolve(size);
+                  return;
+                }
+                lastSize = size;
+                requestAnimationFrame(tryMeasure);
               }
             }
           );
